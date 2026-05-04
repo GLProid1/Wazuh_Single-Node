@@ -1,0 +1,31 @@
+<decoder name="forka-postgres-root">
+  <prematch type="pcre2">^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+ \S+ </prematch>
+</decoder>
+
+<decoder name="forka-postgres-query">
+  <parent>forka-postgres-root</parent>
+  <prematch type="pcre2">LOG:\s+statement:</prematch>
+  <regex type="pcre2" offset="after_parent">^\[(\d+)\]\s+(\S+)@(\S+)\s+client=(\S+).*?statement:\s+(SELECT|INSERT INTO|UPDATE|DELETE FROM|TRUNCATE|COPY|CREATE TABLE|DROP TABLE|ALTER TABLE)(?:\s+.*?FROM)?\s+(?:ONLY\s+)?("?[\w\.]+"?)</regex>
+  <order>pid, srcuser, dstdb, srcip, db_action, db_table</order>
+</decoder>
+
+<decoder name="forka-postgres-general">
+  <parent>forka-postgres-root</parent>
+  <prematch type="pcre2">LOG:\s+statement:</prematch>
+  <regex type="pcre2" offset="after_parent">^\[(\d+)\]\s+(\S+)@(\S+)\s+client=(\S+).*?statement:\s+(.+)</regex>
+  <order>pid, srcuser, dstdb, srcip, db_action</order>
+</decoder>
+
+<decoder name="forka-postgres-auth-fail">
+  <parent>forka-postgres-root</parent>
+  <prematch>FATAL:</prematch>
+  <regex type="pcre2" offset="after_parent">^\[(\d+)\]\s+(\S+)@(\S+)\s+client=(\S+).*?FATAL:\s+([^\r\n]+)</regex>
+  <order>pid, srcuser, dstdb, srcip, err_msg</order>
+</decoder>
+
+<decoder name="forka-postgres-auth-success">
+  <parent>forka-postgres-root</parent>
+  <prematch>connection authorized</prematch>
+  <regex type="pcre2" offset="after_parent">^\[(\d+)\]\s+(\S+)@(\S+)\s+client=(\S+)</regex>
+  <order>pid, srcuser, dstdb, srcip</order>
+</decoder>

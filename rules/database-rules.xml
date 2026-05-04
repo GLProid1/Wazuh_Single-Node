@@ -1,0 +1,348 @@
+<!--forka-postgres-rules.xml-->
+<group name="custom_db_audit,">
+
+  <!-- ========== ROOT ========== -->
+  <rule id="100100" level="0">
+    <decoded_as>forka-postgres-root</decoded_as>
+    <description>PostgreSQL: Internal Root Grouping</description>
+  </rule>
+
+  <!-- ========== IGNORE ========== -->
+  <rule id="100101" level="0">
+    <if_sid>100100</if_sid>
+    <field name="db_table" type="pcre2">(?i)(django_session|authtoken_token|django_migrations|django_content_type|django_site|django_admin_log)</field>
+    <description>Ignored: Operational System Table</description>
+  </rule>
+
+  <rule id="100102" level="0">
+    <if_sid>100100</if_sid>
+    <field name="db_table" type="pcre2">auth_user</field>
+    <match>SET "last_login"</match>
+    <description>Ignored: Routine User Login Timestamp</description>
+  </rule>
+
+  <!-- ========== AUTH ========== -->
+  <rule id="100103" level="5">
+    <decoded_as>forka-postgres-auth-fail</decoded_as>
+    <description>PostgreSQL: Login Failed ($(srcuser) from IP $(srcip))</description>
+    <group>authentication_failed</group>
+  </rule>
+
+  <rule id="100104" level="3">
+    <decoded_as>forka-postgres-auth-success</decoded_as>
+    <description>PostgreSQL: Login Success ($(srcuser) from IP $(srcip))</description>
+    <group>authentication_success</group>
+  </rule>
+
+  <rule id="100105" level="10" frequency="10" timeframe="60">
+    <if_matched_sid>100103</if_matched_sid>
+    <same_source_ip />
+    <description>PostgreSQL: Brute Force - 10+ failed login from IP $(srcip)</description>
+    <mitre><id>T1110</id></mitre>
+    <group>authentication_failures,gdpr_IV_32.2</group>
+  </rule>
+
+  <rule id="100106" level="13" frequency="50" timeframe="60">
+    <if_matched_sid>100103</if_matched_sid>
+    <same_source_ip />
+    <description>PostgreSQL: Brute Force Severe - 50+ failed login from IP $(srcip)</description>
+    <mitre><id>T1110</id></mitre>
+    <group>authentication_failures,gdpr_IV_32.2</group>
+  </rule>
+
+  <!-- ========== SELECT ========== -->
+  <rule id="100107" level="5">
+    <if_sid>100100</if_sid>
+    <field name="db_action">^SELECT</field>
+    <description>PostgreSQL: SELECT on table $(db_table) by $(srcuser) from IP $(srcip)</description>
+    <mitre><id>T1213</id></mitre>
+    <group>data_access</group>
+  </rule>
+
+  <rule id="100108" level="8">
+    <if_sid>100107</if_sid>
+    <field name="db_table" type="pcre2">auth_user</field>
+    <description>PostgreSQL: SELECT on Sensitive Table auth_user by $(srcuser) from IP $(srcip)</description>
+    <mitre><id>T1213</id></mitre>
+    <group>data_access</group>
+  </rule>
+
+  <rule id="100109" level="12" frequency="20" timeframe="30">
+    <if_matched_sid>100108</if_matched_sid>
+    <same_source_ip />
+    <description>PostgreSQL: Possible Data Exfiltration - Repeated SELECT on auth_user from IP $(srcip)</description>
+    <mitre><id>T1213</id></mitre>
+    <group>data_exfiltration</group>
+  </rule>
+
+  <!-- ========== DML ========== -->
+  <rule id="100110" level="6">
+    <if_sid>100100</if_sid>
+    <field name="db_action">^INSERT INTO</field>
+    <description>PostgreSQL: INSERT INTO table $(db_table) by $(srcuser) from IP $(srcip)</description>
+    <mitre><id>T1565</id></mitre>
+    <group>dml</group>
+  </rule>
+
+  <rule id="100111" level="6">
+    <if_sid>100100</if_sid>
+    <field name="db_action">^UPDATE</field>
+    <description>PostgreSQL: UPDATE on table $(db_table) by $(srcuser) from IP $(srcip)</description>
+    <mitre><id>T1565</id></mitre>
+    <group>dml</group>
+  </rule>
+
+  <rule id="100112" level="6">
+    <if_sid>100100</if_sid>
+    <field name="db_action">^DELETE FROM</field>
+    <description>PostgreSQL: DELETE FROM table $(db_table) by $(srcuser) from IP $(srcip)</description>
+    <mitre><id>T1565</id></mitre>
+    <group>dml</group>
+  </rule>
+
+  <rule id="100113" level="13" frequency="5" timeframe="10">
+    <if_matched_sid>100112</if_matched_sid>
+    <same_source_ip />
+    <description>PostgreSQL: Mass Delete Detected on $(db_table) from IP $(srcip)</description>
+    <mitre><id>T1485</id></mitre>
+    <group>data_destruction</group>
+  </rule>
+
+  <!-- ========== DDL ========== -->
+  <rule id="100114" level="8">
+    <if_sid>100100</if_sid>
+    <field name="db_action">^CREATE TABLE</field>
+    <description>PostgreSQL: CREATE TABLE $(db_table) by $(srcuser) from IP $(srcip)</description>
+    <mitre><id>T1565</id></mitre>
+    <group>ddl</group>
+  </rule>
+
+  <rule id="100115" level="8">
+    <if_sid>100100</if_sid>
+    <field name="db_action">^ALTER TABLE</field>
+    <description>PostgreSQL: ALTER TABLE $(db_table) by $(srcuser) from IP $(srcip)</description>
+    <mitre><id>T1565</id></mitre>
+    <group>ddl</group>
+  </rule>
+
+  <rule id="100116" level="13">
+    <if_sid>100100</if_sid>
+    <field name="db_action">^DROP TABLE</field>
+    <description>CRITICAL: DROP TABLE $(db_table) by $(srcuser) from IP $(srcip)</description>
+    <mitre><id>T1485</id></mitre>
+    <group>data_destruction</group>
+  </rule>
+
+  <rule id="100117" level="13">
+    <if_sid>100100</if_sid>
+    <field name="db_action">^TRUNCATE</field>
+    <description>CRITICAL: TRUNCATE on table $(db_table) by $(srcuser) from IP $(srcip)</description>
+    <mitre><id>T1485</id></mitre>
+    <group>data_destruction</group>
+  </rule>
+
+  <!-- ========== PRIVILEGE ESCALATION ========== -->
+  <rule id="100118" level="10">
+    <if_sid>100100</if_sid>
+    <field name="db_table" type="pcre2">auth_user</field>
+    <field name="db_action">^INSERT INTO</field>
+    <description>PostgreSQL: New User Registration on auth_user from IP $(srcip)</description>
+    <mitre><id>T1136</id></mitre>
+    <group>account_creation</group>
+  </rule>
+
+  <rule id="100119" level="12">
+    <if_sid>100100</if_sid>
+    <field name="db_table" type="pcre2">auth_user</field>
+    <field name="db_action" type="pcre2">^UPDATE|^DELETE FROM</field>
+    <description>CRITICAL: DML on auth_user by $(srcuser) - Possible Account Takeover</description>
+    <mitre><id>T1098</id></mitre>
+    <group>account_manipulation</group>
+  </rule>
+
+  <rule id="100120" level="10" frequency="10" timeframe="60">
+    <if_matched_sid>100118</if_matched_sid>
+    <same_source_ip />
+    <description>PostgreSQL: Possible Mass Registration / Bot Attack - 10+ INSERT on table auth_user from IP $(srcip)</description>
+    <mitre><id>T1136</id></mitre>
+    <group>account_creation</group>
+  </rule>
+
+  <!-- ========== SQL INJECTION DETECTION ========== -->
+
+  <!-- FIX: db_action di decoder select hanya berisi keyword "SELECT"          -->
+  <!-- SQLi pattern ada di raw log — gunakan <regex> yang match full log event  -->
+  <!-- Batasi false positive dengan require field db_action=SELECT terlebih dulu -->
+
+  <!-- Base SQLi: pastikan ini log SELECT dulu, lalu cek pattern di raw log -->
+  <rule id="100130" level="10">
+    <if_sid>100107</if_sid>
+    <regex type="pcre2">(?i)(\bOR\b\s+['"1].+=.+['"\d]|\bAND\b\s+['"1].+=.+['"\d]|--\s|;\s*--|\bUNION\b.+\bSELECT\b|\bpg_sleep\b\s*\(|\bWAITFOR\b\s+DELAY|\binformation_schema\b|\bpg_tables\b|\bpg_user\b|\bpg_shadow\b)</regex>
+    <description>CRITICAL: Possible SQL Injection on $(db_table) by $(srcuser) from IP $(srcip)</description>
+    <mitre><id>T1190</id></mitre>
+    <group>sqli,attack</group>
+  </rule>
+
+  <!-- UNION-based: eksfiltrasi data via column alignment -->
+  <rule id="100131" level="12">
+    <if_sid>100130</if_sid>
+    <regex type="pcre2">(?i)\bUNION\b.+\bSELECT\b</regex>
+    <description>CRITICAL: UNION-based SQL Injection on $(db_table) by $(srcuser) from IP $(srcip)</description>
+    <mitre><id>T1190</id></mitre>
+    <group>sqli,data_exfiltration</group>
+  </rule>
+
+  <!-- Time-based blind: inferensi data via delay response -->
+  <rule id="100132" level="12">
+    <if_sid>100130</if_sid>
+    <regex type="pcre2">(?i)(pg_sleep|WAITFOR\s+DELAY)\s*\(</regex>
+    <description>CRITICAL: Time-based Blind SQL Injection on $(db_table) by $(srcuser) from IP $(srcip)</description>
+    <mitre><id>T1190</id></mitre>
+    <group>sqli,blind_sqli</group>
+  </rule>
+
+  <!-- Schema enumeration: recon struktur database -->
+  <rule id="100133" level="12">
+    <if_sid>100130</if_sid>
+    <regex type="pcre2">(?i)(information_schema|pg_tables|pg_user|pg_shadow|pg_roles)</regex>
+    <description>CRITICAL: DB Schema Enumeration via SQL Injection by $(srcuser) from IP $(srcip)</description>
+    <mitre><id>T1190</id></mitre>
+    <group>sqli,reconnaissance</group>
+  </rule>
+
+  <!-- Stacked query: injeksi perintah DDL/DML setelah tanda titik koma -->
+  <!-- if_sid 100100 (bukan 100130) karena stacked query bisa muncul di action apapun -->
+  <!-- Tambah field db_action untuk batasi false positive -->
+  <rule id="100134" level="13">
+    <if_sid>100100</if_sid>
+    <field name="db_action" type="pcre2">^(SELECT|INSERT|UPDATE|DELETE|COPY)</field>
+    <regex type="pcre2">(?i);\s*(DROP|TRUNCATE|DELETE|INSERT|UPDATE|CREATE)\s</regex>
+    <description>CRITICAL: Stacked Query SQL Injection by $(srcuser) from IP $(srcip)</description>
+    <mitre><id>T1190</id></mitre>
+    <group>sqli,data_destruction</group>
+  </rule>
+
+  <!-- Automated SQLi: 5+ attempt dalam 30 detik dari IP sama -->
+  <rule id="100135" level="13" frequency="5" timeframe="30">
+    <if_matched_sid>100130</if_matched_sid>
+    <same_source_ip />
+    <description>CRITICAL: Automated SQL Injection Attack from $(srcip) - 5+ attempts in 30s</description>
+    <mitre><id>T1190</id></mitre>
+    <group>sqli,automated_attack</group>
+  </rule>
+
+  <!-- ========== RCE DETECTION ========== -->
+
+  <!-- FIX: hapus <decoded_as> dari rule yang pakai <if_sid>         -->
+  <!-- Gunakan <field name="db_action"> untuk match di field decoder  -->
+  <!-- db_action di forka-postgres-copy berisi full COPY statement    -->
+
+  <!-- COPY TO PROGRAM: eksekusi OS command, output ke tabel -->
+  <rule id="100136" level="15">
+    <if_sid>100100</if_sid>
+    <regex type="pcre2">(?i)COPY\s+.+\s+TO\s+PROGRAM\s+'</regex>
+    <description>CRITICAL: RCE - COPY TO PROGRAM by $(srcuser) from IP $(srcip)</description>
+    <mitre><id>T1059</id></mitre>
+    <group>rce,command_execution</group>
+  </rule>
+
+  <!-- COPY FROM PROGRAM: baca output command OS ke tabel -->
+  <rule id="100137" level="15">
+    <if_sid>100100</if_sid>
+    <regex type="pcre2">(?i)COPY\s+\S+\s+FROM\s+PROGRAM\s+'</regex>
+    <description>CRITICAL: RCE - COPY FROM PROGRAM by $(srcuser) from IP $(srcip)</description>
+    <mitre><id>T1059</id></mitre>
+    <group>rce,command_execution</group>
+  </rule>
+
+  <!-- Reverse shell: pattern koneksi balik ke attacker -->
+  <rule id="100138" level="15">
+    <if_sid>100100</if_sid>
+    <regex type="pcre2">(?i)(\/dev\/tcp\/|\/dev\/udp\/|bash\s+-i|nc\s+-|ncat\s+|python.*socket|perl.*socket)</regex>
+    <description>CRITICAL: Reverse Shell Command Detected by $(srcuser) from IP $(srcip)</description>
+    <mitre><id>T1059.004</id></mitre>
+    <group>rce,reverse_shell</group>
+  </rule>
+
+  <!-- Download and execute: pull payload dari remote lalu jalankan -->
+  <rule id="100139" level="15">
+    <if_sid>100100</if_sid>
+    <regex type="pcre2">(?i)(curl|wget|fetch)\s+.*\|\s*(bash|sh|python|perl)</regex>
+    <description>CRITICAL: Remote Payload Download and Execute by $(srcuser) from IP $(srcip)</description>
+    <mitre><id>T1059.004</id></mitre>
+    <group>rce,payload_download</group>
+  </rule>
+
+  <!-- CREATE FUNCTION LANGUAGE C: load shared library berbahaya -->
+  <rule id="100140" level="13">
+    <if_sid>100100</if_sid>
+    <regex type="pcre2">(?i)CREATE\s+(OR\s+REPLACE\s+)?FUNCTION\s+.+LANGUAGE\s+C</regex>
+    <description>CRITICAL: RCE - Malicious C Function Creation by $(srcuser) from IP $(srcip)</description>
+    <mitre><id>T1059</id></mitre>
+    <group>rce,function_abuse</group>
+  </rule>
+
+  <!-- lo_import dari path sensitif: baca file OS via large object -->
+  <rule id="100141" level="13">
+    <if_sid>100100</if_sid>
+    <regex type="pcre2">(?i)lo_import\s*\(\s*'(\/etc\/|\/root\/|\/home\/|\/var\/lib\/postgresql\/)</regex>
+    <description>CRITICAL: lo_import from Sensitive Path by $(srcuser) from IP $(srcip)</description>
+    <mitre><id>T1005</id></mitre>
+    <group>rce,file_read</group>
+  </rule>
+
+  <!-- lo_from_bytea: tulis data binary ke large object — precursor file write -->
+  <rule id="100142" level="13">
+    <if_sid>100100</if_sid>
+    <regex type="pcre2">(?i)lo_from_bytea\s*\(</regex>
+    <description>CRITICAL: lo_from_bytea - Possible Malicious File Write by $(srcuser) from IP $(srcip)</description>
+    <mitre><id>T1059</id></mitre>
+    <group>rce,file_write</group>
+  </rule>
+
+  <!-- lo_export ke path sensitif: overwrite file konfigurasi OS -->
+  <rule id="100143" level="15">
+    <if_sid>100100</if_sid>
+    <regex type="pcre2">(?i)lo_export\s*\(.*,\s*'(\/etc\/|\/root\/|\/home\/|\/var\/lib\/postgresql\/)</regex>
+    <description>CRITICAL: lo_export to Sensitive Path - Possible Config Overwrite by $(srcuser) from IP $(srcip)</description>
+    <mitre><id>T1059</id></mitre>
+    <group>rce,file_write</group>
+  </rule>
+
+  <!-- pg_reload_conf: muat ulang konfigurasi — dipakai setelah lo_export modif config -->
+  <rule id="100144" level="15">
+    <if_sid>100100</if_sid>
+    <regex type="pcre2">(?i)pg_reload_conf\s*\(\s*\)</regex>
+    <description>CRITICAL: pg_reload_conf Called - Possible Malicious Config Reload by $(srcuser) from IP $(srcip)</description>
+    <mitre><id>T1059</id></mitre>
+    <group>rce,config_manipulation</group>
+  </rule>
+
+  <!-- pg_switch_wal: trigger archive_command — eksekusi command via WAL archiving -->
+  <rule id="100145" level="15">
+    <if_sid>100100</if_sid>
+    <regex type="pcre2">(?i)pg_switch_wal\s*\(\s*\)</regex>
+    <description>CRITICAL: pg_switch_wal - Possible Archive Command RCE Trigger by $(srcuser) from IP $(srcip)</description>
+    <mitre><id>T1059</id></mitre>
+    <group>rce,command_execution</group>
+  </rule>
+
+  <!-- Repeated COPY PROGRAM: 3+ attempt dalam 60 detik — serangan otomatis -->
+  <rule id="100146" level="15" frequency="3" timeframe="60">
+    <if_matched_group>command_execution</if_matched_group>
+    <same_source_ip />
+    <description>CRITICAL: Repeated RCE Attempts via COPY PROGRAM from IP $(srcip)</description>
+    <mitre><id>T1059</id></mitre>
+    <group>rce,automated_attack</group>
+  </rule>
+
+  <!-- RCE chain: lo_export modif config + pg_reload_conf = full RCE via config -->
+  <rule id="100147" level="15" frequency="2" timeframe="120">
+    <if_matched_group>config_manipulation</if_matched_group>
+    <same_source_ip />
+    <description>CRITICAL: RCE Chain - Config Overwrite and Reload Detected from IP $(srcip)</description>
+    <mitre><id>T1059</id></mitre>
+    <group>rce,attack_chain</group>
+  </rule>
+
+</group>

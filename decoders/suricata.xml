@@ -1,0 +1,12 @@
+<!-- suricate-decoders.xml-->
+
+<!-- Parent: deteksi field timestamp + event_type -->
+<decoder name="suricata-log">
+  <prematch type="pcre2">^\{"timestamp":"[\d\-T:\.]+[+\-]\d{4}","flow_id":</prematch>
+</decoder>
+
+<!-- Child: JSON decode all field-->
+<decoder name="suricata-log-json">
+  <parent>suricata-log</parent>
+  <plugin_decoder>JSON_Decoder</plugin_decoder>
+</decoder>

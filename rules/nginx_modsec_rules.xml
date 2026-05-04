@@ -1,0 +1,59 @@
+<!-- Nginx_Modsec_rules.xml -->
+
+<group name="nginx,modsecurity,web,">
+  <!-- Base Rule -->
+  <rule id="100100" level="3">
+    <decoded_as>nginx-modsec</decoded_as>
+    <description>ModSecurity:Web Request Diproses</description>
+    <group>modsecurity,</group>
+  </rule>
+
+  <!-- HTTP 403 - Request diblokir ModSecurity -->
+  <rule id="100101" level="6">
+    <if_sid>100100</if_sid>
+    <!-- Field JSON diakses dengan titik sebagai separator -->
+    <field name="transaction.response.http_code">^403$</field>
+    <description>ModSecurity: Request diblokir (HTTP 403) dari $(transaction.client_ip)</description>
+    <group>modsecurity,blocked,</group>
+  </rule>
+
+  <!-- Rule SQL Injection terdeteksi (ruleId 942100) -->
+  <rule id="100102" level="10">
+    <if_sid>100100</if_sid>
+    <!-- Cek apakah pesan pertama mengandung ruleId SQLi -->
+    <field name="transaction.messages.details.ruleId">942100</field>
+    <description>ModSecurity: SQL Injection Detected from $(transaction.client_ip) pada URL $(transaction.request.uri)</description>
+    <mitre>
+      <id>T1190</id>
+    </mitre>
+    <group>modsecurity,sqli,attack,</group>
+  </rule>
+
+  <!-- Rule Anomaly Score Exceeded (ruleId 949110) -->
+  <rule id="100103" level="12">
+    <if_sid>100100</if_sid>
+    <field name="transaction.messages.details.ruleId">949110</field>
+    <description>ModSecurity: Anomaly Score Exceeded from $(transaction.client_ip) - Possible Complex Attacks</description>
+    <mitre>
+      <id>T1190</id>
+    </mitre>
+    <group>modsecurity,anomaly,attack,high_severity,</group>
+  </rule>
+
+  <!-- Rule Host Header Using IP -->
+  <rule id="100104" level="7">
+    <if_sid>100100</if_sid>
+    <field name="transaction.messages.details.ruleId">920350</field>
+    <description>ModSecurity: Host Header Using Numeric IP from $(transaction.client_ip) - Possible Scanning</description>
+    <group>modsecurity,recon,</group>
+  </rule>
+
+  <!-- Rule Severity Critical -->
+  <rule id="100105" level="10">
+    <if_sid>100100</if_sid>
+    <field name="transaction.messages.details.severity">^2$</field>
+    <description>ModSecurity: Severity Attack Critical from $(transaction.client_ip)</description>
+    <group>modsecurity,attack,critical,</group>
+  </rule>
+
+</group>

@@ -1,0 +1,116 @@
+<!--suricata-rules.xml-->
+
+<group name="suricata,ids">
+  <!-- Parent Rule -->
+  <rule id="100200" level="0">
+    <decoded_as>suricata-log</decoded_as>
+    <field name="event_type">^alert$</field>
+    <description>Suricata: Alert Event Detected</description>
+  </rule>
+
+  <!-- Severity 1 - High -->
+  <rule id="100201" level="10">
+    <if_sid>100200</if_sid>
+    <field name="alert.severity">^2$</field>
+    <description>Suricata: Medium Severity Alert - $(alert.signature) from $(src_ip)</description>
+    <group>suricata,high_severity</group>
+  </rule>
+
+  <!-- Severity 2 - Medium -->
+  <rule id="100202" level="7">
+    <if_sid>100200</if_sid>
+    <field name="alert.severity">^2$</field>
+    <description>Suricata: Medium Severity Alert - $(alert.signature) from $(src_ip)</description>
+    <group>suricata,medium_severity</group>
+  </rule>
+
+  <!-- Severity 3 - Low -->
+  <rule id="100203" level="5">
+    <if_sid>100200</if_sid>
+    <field name="alert.severity">^3$</field>
+    <description>Suricata: Low Severity Alert - $(alert.signature) from $(src_ip)</description>
+    <group>suricata,low_severity</group>
+  </rule>
+
+  <!-- Web Application Attack -->
+  <rule id="100204" level="10">
+    <if_sid>100200</if_sid>
+    <field name="alert.category">Web Application Attack</field>
+    <description>Suricata: Web Application Attack Detected from $(src_ip) - $(alert.signature)</description>
+    <mitre><id>T1190</id></mitre>
+    <group>suricata,web_attack</group>
+  </rule>
+
+  <!-- XSS via Suricate signature -->
+  <rule id="100205" level="10">
+    <if_sid>100200</if_sid>
+    <field name="alert.signature" type="pcre2">(?i)cross.site.script|XSS</field>
+    <description>Suricata: XSS Attack Detected from $(src_ip)</description>
+    <mitre><id>T1059.007</id></mitre>
+    <group>suricata,xss,web_attack</group>
+  </rule>
+
+  <!-- SQL Injection -->
+  <rule id="100206" level="12">
+    <if_sid>100200</if_sid>
+    <field name="alert.signature" type="pcre2">(?i)sql.inject|SEARCH|SELECT.*SQL</field>
+    <description>Suricata: SQL Injection Detected from $(src_ip)</description>
+    <mitre><id>T1190</id></mitre>
+    <group>suricata,sqli,web_attack</group>
+  </rule>
+
+  <!-- Network Scan / Recon -->
+  <rule id="100207" level="7">
+    <if_sid>100200</if_sid>
+    <field name="alert.category">Detection of a Network Scan</field>
+    <description>Suricata: Network Scan Detected from $(src_ip)</description>
+    <mitre><id>T1595</id></mitre>
+    <group>suricata,reconnaissance,scan</group>
+  </rule>
+
+  <!-- Action Blocked -->
+  <rule id="100208" level="8">
+    <if_sid>100200</if_sid>
+    <field name="alert.action">^blocked$</field>
+    <description>Suricata: Traffic Blocked - $(alert.signature) from $(src_ip)</description>
+    <mitre><id>T1190</id></mitre>
+    <group>suricata,blocked</group>
+  </rule>
+
+  <!-- Action Allowed but High Severity - Need Attention! -->
+  <rule id="100209" level="12">
+    <if_sid>100200</if_sid>
+    <field name="alert.action">^allowed$</field>
+    <field name="alert.severity">^1$</field>
+    <description>Suricata: HIGH Severity Attack Allowed (not blocked) from $(src_ip) - $(alert.signature)</description>
+    <mitre><id>T1190</id></mitre>
+    <group>suricata,high_severity,not_blocked</group>
+  </rule>
+
+  <!-- Repeated attacks from the same IP -->
+  <rule id="100210" level="12" frequency="10" timeframe="60">
+    <if_matched_sid>100201</if_matched_sid>
+    <same_source_ip />
+    <description>Suricata: Multiple High Severity Alerts from Same IP $(src_ip) - Possible Attack Campaign</description>
+    <mitre><id>T1190</id></mitre>
+    <group>suricata,attack_campaign,high_severity</group>
+  </rule>
+
+  <!-- Brute Force / DIR Scanning -->
+  <rule id="100211" level="8">
+    <if_sid>100200</if_sid>
+    <field name="alert.signature" type="pcre2">(?i)(bruteforce|brute.force|dir.scan|file.scan)</field>
+    <description>Suricata: Brute Force / Directory Scan Detected from $(src_ip)</description>
+    <mitre><id>T1083</id></mitre>
+    <group>suricata,bruteforce,reconnaissance</group>
+  </rule>
+
+  <!-- Malware C2 Communication -->
+  <rule id="100212" level="13">
+    <if_sid>100200</if_sid>
+    <field name="alert.category" type="pcre2">(?i)(trojan|malware|c2|command.and.control)</field>
+    <description>Suricata: Malware/C2 Activity Detected from $(src_ip) - $(alert.signature)</description>
+    <mitre><id>T1071</id></mitre>
+    <group>suricata,malware,c2</group>
+  </rule>
+</group>

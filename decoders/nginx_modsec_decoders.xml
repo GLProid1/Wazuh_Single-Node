@@ -1,0 +1,10 @@
+<!-- Nginx_Modsec_decoders.xml -->
+
+<decoder name="nginx-modsec">
+  <prematch>{"transaction":</prematch>
+</decoder>
+
+<decoder name="nginx-modsec-json">
+  <parent>nginx-modsec</parent>
+  <plugin_decoder>JSON_Decoder</plugin_decoder>
+</decoder>

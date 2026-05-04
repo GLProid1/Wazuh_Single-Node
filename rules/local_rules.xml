@@ -1,0 +1,16 @@
+<!-- Local rules -->
+
+<!-- Modify it at your will. -->
+<!-- Copyright (C) 2015, Wazuh Inc. -->
+
+<!-- Example -->
+<group name="local,syslog,sshd,">
+
+  <rule id="5712" level="10" frequency="10" timeframe="60" overwrite="yes">
+    <if_matched_sid>5710</if_matched_sid>
+    <same_source_ip />
+    <description>SSH Brute Force Detected (10+ attempts in 60s)</description>
+    <group>authentication_failures,attacks,</group>
+  </rule>
+
+</group>
