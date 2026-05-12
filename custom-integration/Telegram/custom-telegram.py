@@ -3,8 +3,9 @@ import sys
 import json
 import requests
 import html
+import os
 
-CHAT_ID="${ID_CHAT}"
+CHAT_ID = int(os.environ.get('ID_CHAT'))
 
 def create_message(alert_json):
     # Get alert information, use empty string if field didn't exist
