@@ -1,7 +1,7 @@
 # Wazuh App Copyright (C) 2017, Wazuh Inc. (License GPLv2)
 services:
   wazuh.manager:
-    image: wazuh/wazuh-manager:4.14.4
+    image: wazuh/wazuh-manager:4.14.1
     hostname: wazuh.manager
     restart: always
     ulimits:
@@ -18,14 +18,16 @@ services:
       - "55000:55000"
     environment:
       - INDEXER_URL=https://wazuh.indexer:9200
-      - INDEXER_USERNAME=${INDEXER_USERNAME}
-      - INDEXER_PASSWORD=${INDEXER_PASSWORD}
+      - INDEXER_USERNAME=admin
+      - INDEXER_PASSWORD=SecretPassword
       - FILEBEAT_SSL_VERIFICATION_MODE=full
       - SSL_CERTIFICATE_AUTHORITIES=/etc/ssl/root-ca.pem
       - SSL_CERTIFICATE=/etc/ssl/filebeat.pem
       - SSL_KEY=/etc/ssl/filebeat.key
-      - API_USERNAME=${API_USERNAME}
-      - API_PASSWORD=${API_USERNAME}
+      - API_USERNAME=wazuh-wui
+      - API_PASSWORD=MyS3cr37P450r.*-
+    env_file:
+      - .env
     volumes:
       - wazuh_api_configuration:/var/ossec/api/configuration
       - wazuh_etc:/var/ossec/etc
@@ -38,10 +40,10 @@ services:
       - ./decoders/suricata.xml:/var/ossec/etc/decoders/suricata.xml
       - ./decoders/local_decoder.xml:/var/ossec/etc/decoders/local_decoder.xml
       - ./decoders/nginx_modsec_decoders.xml:/var/ossec/etc/decoders/Nginx-Modsec.xml
-      - ./custom-integration/MISP/custom-misp:/var/ossec/integrations/custom-misp:ro
-      - ./custom-integration/MISP/custom-misp.py:/var/ossec/integrations/custom-misp.py:ro
-      - ./custom-integration/Telegram/custom-telegram:/var/ossec/integrations/custom-telegram:ro
-      - ./custom-integration/Telegram/custom-telegram.py:/var/ossec/integrations/custom-telegram.py:ro
+      - ./custom-integration/MISP/custom-misp:/var/ossec/integrations/custom-misp
+      - ./custom-integration/MISP/custom-misp.py:/var/ossec/integrations/custom-misp.py
+      - ./custom-integration/Telegram/custom-telegram:/var/ossec/integrations/custom-telegram
+      - ./custom-integration/Telegram/custom-telegram.py:/var/ossec/integrations/custom-telegram.py
       - wazuh_logs:/var/ossec/logs
       - wazuh_queue:/var/ossec/queue
       - wazuh_var_multigroups:/var/ossec/var/multigroups
@@ -57,7 +59,7 @@ services:
       - ./config/wazuh_cluster/wazuh_manager.conf:/wazuh-config-mount/etc/ossec.conf
 
   wazuh.indexer:
-    image: wazuh/wazuh-indexer:4.14.4
+    image: wazuh/wazuh-indexer:4.14.1
     hostname: wazuh.indexer
     restart: always
     ports:
@@ -82,19 +84,19 @@ services:
       - ./config/wazuh_indexer/internal_users.yml:/usr/share/wazuh-indexer/config/opensearch-security/internal_users.yml
 
   wazuh.dashboard:
-    image: wazuh/wazuh-dashboard:4.14.4
+    image: wazuh/wazuh-dashboard:4.14.1
     hostname: wazuh.dashboard
     restart: always
     ports:
       - 443:5601
     environment:
-      - INDEXER_USERNAME=${INDEXER_USERNAME}
-      - INDEXER_PASSWORD=${INDEXER_PASSWORD}
+      - INDEXER_USERNAME=admin
+      - INDEXER_PASSWORD=SecretPassword
       - WAZUH_API_URL=https://wazuh.manager
       - DASHBOARD_USERNAME=kibanaserver
       - DASHBOARD_PASSWORD=kibanaserver
-      - API_USERNAME=${API_USERNAME}
-      - API_PASSWORD=${API_PASSWORD}
+      - API_USERNAME=wazuh-wui
+      - API_PASSWORD=MyS3cr37P450r.*-
     volumes:
       - ./config/wazuh_indexer_ssl_certs/wazuh.dashboard.pem:/usr/share/wazuh-dashboard/certs/wazuh-dashboard.pem
       - ./config/wazuh_indexer_ssl_certs/wazuh.dashboard-key.pem:/usr/share/wazuh-dashboard/certs/wazuh-dashboard-key.pem
