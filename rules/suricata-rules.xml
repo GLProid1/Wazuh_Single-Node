@@ -11,8 +11,8 @@
   <!-- Severity 1 - High -->
   <rule id="100201" level="10">
     <if_sid>100200</if_sid>
-    <field name="alert.severity">^2$</field>
-    <description>Suricata: Medium Severity Alert - $(alert.signature) from $(src_ip)</description>
+    <field name="alert.severity">^1$</field>
+    <description>Suricata: High Severity Alert - $(alert.signature) from $(src_ip)</description>
     <group>suricata,high_severity</group>
   </rule>
 
