@@ -31,15 +31,10 @@ services:
     volumes:
       - wazuh_api_configuration:/var/ossec/api/configuration
       - wazuh_etc:/var/ossec/etc
-      - ./rules/100620-misp_rules.xml:/var/ossec/etc/rules/100620-misp_rules.xml
-      - ./rules/database-rules.xml:/var/ossec/etc/rules/database-rules.xml
-      - ./rules/suricata-rules.xml:/var/ossec/etc/rules/suricata-rules.xml
-      - ./rules/local_rules.xml:/var/ossec/etc/rules/local_rules.xml
-      - ./rules/nginx_modsec_rules.xml:/var/ossec/etc/rules/nginx_modsec_rules.xml
-      - ./decoders/database.xml:/var/ossec/etc/decoders/database.xml
-      - ./decoders/suricata.xml:/var/ossec/etc/decoders/suricata.xml
-      - ./decoders/local_decoder.xml:/var/ossec/etc/decoders/local_decoder.xml
-      - ./decoders/nginx_modsec_decoders.xml:/var/ossec/etc/decoders/Nginx-Modsec.xml
+      - ./rules:/var/ossec/etc/rules:rw
+      - ./decoders:/var/ossec/etc/decoders:rw
+      - ./custom-integration/MISP/custom-misp-push:/var/ossec/integrations/custom-misp-push
+      - ./custom-integration/MISP/custom-misp-push.py:/var/ossec/integrations/custom-misp-push.py
       - ./custom-integration/MISP/custom-misp:/var/ossec/integrations/custom-misp
       - ./custom-integration/MISP/custom-misp.py:/var/ossec/integrations/custom-misp.py
       - ./custom-integration/Telegram/custom-telegram:/var/ossec/integrations/custom-telegram
