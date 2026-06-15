@@ -6,6 +6,7 @@
     <decoded_as>suricata-log</decoded_as>
     <field name="event_type">^alert$</field>
     <description>Suricata: Alert Event Detected</description>
+    <options>no_full_log</options>
   </rule>
 
   <!-- Severity 1 - High -->
@@ -14,6 +15,7 @@
     <field name="alert.severity">^1$</field>
     <description>Suricata: High Severity Alert - $(alert.signature) from $(src_ip)</description>
     <group>suricata,high_severity</group>
+    <options>no_full_log</options>
   </rule>
 
   <!-- Severity 2 - Medium -->
@@ -30,6 +32,7 @@
     <field name="alert.severity">^3$</field>
     <description>Suricata: Low Severity Alert - $(alert.signature) from $(src_ip)</description>
     <group>suricata,low_severity</group>
+    <options>no_full_log</options>
   </rule>
 
   <!-- Web Application Attack -->
@@ -39,6 +42,7 @@
     <description>Suricata: Web Application Attack Detected from $(src_ip) - $(alert.signature)</description>
     <mitre><id>T1190</id></mitre>
     <group>suricata,web_attack</group>
+    <options>no_full_log</options>
   </rule>
 
   <!-- XSS via Suricate signature -->
@@ -48,6 +52,7 @@
     <description>Suricata: XSS Attack Detected from $(src_ip)</description>
     <mitre><id>T1059.007</id></mitre>
     <group>suricata,xss,web_attack</group>
+    <options>no_full_log</options>
   </rule>
 
   <!-- SQL Injection -->
@@ -57,6 +62,7 @@
     <description>Suricata: SQL Injection Detected from $(src_ip)</description>
     <mitre><id>T1190</id></mitre>
     <group>suricata,sqli,web_attack</group>
+    <options>no_full_log</options>
   </rule>
 
   <!-- Network Scan / Recon -->
@@ -66,6 +72,7 @@
     <description>Suricata: Network Scan Detected from $(src_ip)</description>
     <mitre><id>T1595</id></mitre>
     <group>suricata,reconnaissance,scan</group>
+    <options>no_full_log</options>
   </rule>
 
   <!-- Action Blocked -->
@@ -75,6 +82,7 @@
     <description>Suricata: Traffic Blocked - $(alert.signature) from $(src_ip)</description>
     <mitre><id>T1190</id></mitre>
     <group>suricata,blocked</group>
+    <options>no_full_log</options>
   </rule>
 
   <!-- Action Allowed but High Severity - Need Attention! -->
@@ -85,6 +93,7 @@
     <description>Suricata: HIGH Severity Attack Allowed (not blocked) from $(src_ip) - $(alert.signature)</description>
     <mitre><id>T1190</id></mitre>
     <group>suricata,high_severity,not_blocked</group>
+    <options>no_full_log</options>
   </rule>
 
   <!-- Repeated attacks from the same IP -->
@@ -94,6 +103,7 @@
     <description>Suricata: Multiple High Severity Alerts from Same IP $(src_ip) - Possible Attack Campaign</description>
     <mitre><id>T1190</id></mitre>
     <group>suricata,attack_campaign,high_severity</group>
+    <options>no_full_log</options>
   </rule>
 
   <!-- Brute Force / DIR Scanning -->
@@ -103,6 +113,7 @@
     <description>Suricata: Brute Force / Directory Scan Detected from $(src_ip)</description>
     <mitre><id>T1083</id></mitre>
     <group>suricata,bruteforce,reconnaissance</group>
+    <options>no_full_log</options>
   </rule>
 
   <!-- Malware C2 Communication -->
@@ -112,5 +123,6 @@
     <description>Suricata: Malware/C2 Activity Detected from $(src_ip) - $(alert.signature)</description>
     <mitre><id>T1071</id></mitre>
     <group>suricata,malware,c2</group>
+    <options>no_full_log</options>
   </rule>
 </group>
