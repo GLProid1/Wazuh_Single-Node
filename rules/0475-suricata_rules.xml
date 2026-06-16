@@ -1,4 +1,3 @@
-bash-5.2# cat /var/ossec/ruleset/rules/0475-suricata_rules.xml
 <!--
   -  Suricata rules
   -  Created by Wazuh, Inc.
