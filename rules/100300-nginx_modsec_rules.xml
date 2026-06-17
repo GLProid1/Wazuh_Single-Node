@@ -26,7 +26,7 @@
 
   <rule id="100308" level="10">
     <if_sid>100300</if_sid>
-    <field name="transaction.messages" type="pcre2">941110|941160</field>
+    <field name="transaction.messages" type="pcre2">attack-xss</field>
     <description>ModSecurity: XSS Attack Detected from $(transaction.client_ip)</description>
     <mitre><id>T1059.007</id></mitre>
     <group>xss,attack,</group>
@@ -34,7 +34,7 @@
 
   <rule id="100309" level="10">
     <if_sid>100300</if_sid>
-    <field name="transaction.messages" type="pcre2">930\d{3}</field>
+    <field name="transaction.messages" type="pcre2">attack-lfi</field>
     <description>ModSecurity: Path Traversal / LFI Attempt from $(transaction.client_ip)</description>
     <mitre><id>T1083</id></mitre>
     <group>lfi,attack,</group>
@@ -42,7 +42,7 @@
 
   <rule id="100310" level="12">
     <if_sid>100300</if_sid>
-    <field name="transaction.messages" type="pcre2">932\d{3}</field>
+    <field name="transaction.messages" type="pcre2">attack-rce</field>
     <description>ModSecurity: Remote Command Execution (RCE) Attempt from $(transaction.client_ip)</description>
     <mitre><id>T1059</id></mitre>
     <group>rce,attack,</group>
@@ -50,7 +50,7 @@
 
   <rule id="100311" level="8">
     <if_sid>100300</if_sid>
-    <field name="transaction.messages" type="pcre2">913\d{3}</field>
+    <field name="transaction.messages" type="pcre2">attack-reputation-scanner</field>
     <description>ModSecurity: Automated Security Scanner Detected from $(transaction.client_ip)</description>
     <mitre><id>T1595</id></mitre>
     <group>scanner,recon,attack,</group>
