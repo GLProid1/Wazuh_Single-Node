@@ -99,7 +99,7 @@
       <options>no_full_log</options>
     </rule> 
 
-    <rule id="866097" level="0">
+    <rule id="86697" level="0">
       <if_sid>86600</if_sid>
       <field name="event_type">^http$</field>
       <description>Suricata: HTTP.</description>
