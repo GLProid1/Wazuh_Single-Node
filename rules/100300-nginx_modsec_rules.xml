@@ -63,6 +63,14 @@
     <description>ModSecurity: HTTP Protocol Violation from $(transaction.client_ip)</description>
     <group>protocol_violation,</group>  
   </rule>
+  
+  <rule id="100308" level="10">
+    <if_sid>100300</if_sid>
+    <field name="transaction.messages" type="pcre2">attack-rfi</field>
+    <description>ModSecurity: Remote File Inclusion (RFI) Attack Detected from $(transaction.client_ip)</description>
+    <mitre><id>T1190</id></mitre>
+    <group>attack,rfi</group>
+  </rule>
 
   <rule id="100308" level="10">
     <if_sid>100300</if_sid>
@@ -74,14 +82,14 @@
     <group>attack,evasion,multipart</group>
   </rule>
   
-  <rule id="100309" level="10">
+  <rule id="100320" level="10">
     <if_sid>100300</if_sid>
     <field name="transaction.messages" type="pcre2">"severity":"2"</field>
     <description>ModSecurity: Severity Attack Critical from $(transaction.client_ip)</description>
     <group>attack,critical,</group>
   </rule>
 
-  <rule id="100310" level="12">
+  <rule id="100321" level="12">
     <if_sid>100300</if_sid>
     <field name="transaction.messages" type="pcre2">(?=.*920350)(?=.*(942100|941110|941160))</field>
     <description>ModSecurity: Complex Attack (Recon + Injection) from $(transaction.client_ip)</description>
@@ -89,7 +97,7 @@
     <group>attack,high_severity,</group>
   </rule>
 
-  <rule id="100311" level="14" frequency="10" timeframe="60">
+  <rule id="100322" level="14" frequency="10" timeframe="60">
     <if_matched_group>attack</if_matched_group>
     <same_field>transaction.client_ip</same_field>
     <description>ModSecurity: High Frequency Attack Campaign from $(transaction.client_ip)</description>
