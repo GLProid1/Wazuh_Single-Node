@@ -1,5 +1,7 @@
 <group name="nginx,modsecurity,web,">
 
+  <!-- ID: 100300 - 100399 -->
+  
   <rule id="100300" level="3">
     <decoded_as>json</decoded_as>
     <field name="transaction.messages" type="pcre2">ruleId</field>
