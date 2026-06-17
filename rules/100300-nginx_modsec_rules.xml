@@ -18,7 +18,7 @@
 
   <rule id="100302" level="10">
     <if_sid>100300</if_sid>
-    <field name="transaction.messages" type="pcre2">942100</field>
+    <field name="transaction.messages" type="pcre2">attack-sqli</field>
     <description>ModSecurity: SQL Injection Detected from $(transaction.client_ip)</description>
     <mitre><id>T1190</id></mitre>
     <group>sqli,attack,</group>
