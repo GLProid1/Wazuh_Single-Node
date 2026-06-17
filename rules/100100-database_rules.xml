@@ -310,7 +310,7 @@
     <regex type="pcre2">(?i)lo_export\s*\(.*,\s*'(\/etc\/|\/root\/|\/home\/|\/var\/lib\/postgresql\/)</regex>
     <description>CRITICAL: lo_export to Sensitive Path - Possible Config Overwrite by $(srcuser) from IP $(srcip)</description>
     <mitre><id>T1059</id></mitre>
-    <group>rce,file_write</group>
+    <group>rce,file_write,config_manipulation</group>
   </rule>
 
   <!-- pg_reload_conf: muat ulang konfigurasi — dipakai setelah lo_export modif config -->
