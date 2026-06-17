@@ -1,6 +1,6 @@
-<group name="nginx,modsecurity,web,">
+<!-- ID: 100300 - 100399 -->
 
-  <!-- ID: 100300 - 100399 -->
+<group name="nginx,modsecurity,web,">
   
   <rule id="100300" level="3">
     <decoded_as>json</decoded_as>
