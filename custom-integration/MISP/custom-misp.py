@@ -36,6 +36,17 @@ misp_apicall_headers = {"Content-Type":"application/json", "Authorization":f"{mi
 
 # --- End input gathering ---
 
+def extract_src_ip(alert):
+    """Ekstrak source IP dari berbagai field yang mungkin ada."""
+    data = alert.get("data", {})
+    return (
+        data.get("srcip") or
+        data.get("src_ip") or
+        data.get("client_ip") or
+        data.get("transaction", {}).get("client_ip") or
+        data.get("win", {}).get("eventdata", {}).get("sourceIp")
+    )
+
 # Helper: MISP search and alert output
 
 def misp_search_and_alert(search_value, alert_output, alert, extra_fields=None, file_path=None):
@@ -148,9 +159,11 @@ elif event_source == 'ossec' and (event_type == "syscheck_entry_added" or event_
  #           sys.exit()
         misp_search_and_alert(md5_after, alert_output, alert, file_path=file_path)
 
-elif event_source == 'web' and (event_type == 'web_scan' or event_type == 'attack'):
+elif event_source in ('web', 'nginx', 'modsecurity'):
     try:
-        wazuh_event_param = alert["data"].get("srcip")
+        wazuh_event_param = extract_src_ip(alert)
+        if not wazuh_event_param:
+            sys.exit()
         found = misp_search_and_alert(wazuh_event_param, alert_output, alert, extra_fields={"srcip": wazuh_event_param})
         if found:
             with open('/var/ossec/etc/lists/misp_ip_lists.txt', 'a') as file:
