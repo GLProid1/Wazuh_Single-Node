@@ -83,21 +83,59 @@ PUSH_RULE_IDS = {
 
 # ─── Mapping rule group → MISP threat category ───────────────
 GROUP_TO_CATEGORY = {
-    "sqli":               "Network activity",
-    "rce":                "Network activity",
-    "xss":                "Network activity",
-    "lfi":                "Network activity",
-    "bruteforce":         "Network activity",
+    # Reconnaissance / scanning -> attacker is mapping the target
+    "reconnaissance":          "Targeting data",
+    "scanner":                 "Targeting data",
+    "nmap":                    "Targeting data",
+    "recon":                   "Targeting data",
+ 
+    # Exploit delivery / injection / web attacks -> the attack payload itself
+    "sqli":                    "Payload delivery",
+    "blind_sqli":              "Payload delivery",
+    "rce":                     "Payload delivery",
+    "xss":                     "Payload delivery",
+    "lfi":                     "Payload delivery",
+    "rfi":                     "Payload delivery",
+    "attack":                  "Payload delivery",
+    "payload_download":        "Payload delivery",
+    "command_execution":       "Payload delivery",
+    "file_write":              "Payload delivery",
+    "function_abuse":          "Payload delivery",
+ 
+    # Dropped artifacts on disk / DB as a result of the attack
+    "data_destruction":        "Artifacts dropped",
+    "file_read":               "Artifacts dropped",
+ 
+    # Maintaining access / surviving reboot / config changes for persistence
+    "config_manipulation":     "Persistence mechanism",
+    "account_creation":        "Persistence mechanism",
+    "account_manipulation":    "Persistence mechanism",
+ 
+    # Network-level behavior: auth, C2, brute force, lateral comms
+    "bruteforce":              "Network activity",
+    "authentication_failed":   "Network activity",
     "authentication_failures": "Network activity",
-    "data_exfiltration":  "Network activity",
-    "data_destruction":   "Network activity",
-    "malware":            "Malware Sample",
-    "c2":                 "Network activity",
-    "reconnaissance":     "Network activity",
-    "scanner":            "Network activity",
-    "attack_chain":       "Network activity",
-    "kill_chain":         "Network activity",
-    "confirmed_breach":   "Network activity",
+    "authentication_success":  "Network activity",
+    "data_exfiltration":       "Network activity",
+    "c2":                      "Network activity",
+    "reverse_shell":           "Network activity",
+    "data_access":             "Network activity",
+    "dml":                     "Network activity",
+    "ddl":                     "Network activity",
+ 
+    # Confirmed multi-stage activity / campaigns -> contextual, not a single IOC type
+    "attack_chain":            "Other",
+    "kill_chain":              "Other",
+    "attack_campaign":         "Other",
+    "automated_attack":        "Other",
+    "high_severity":           "Other",
+    "not_blocked":             "Other",
+    "medium_severity":         "Other",
+    "low_severity":            "Other",
+ 
+    # Confirmed via MISP threat intel itself -> internal correlation reference
+    "confirmed_breach":        "Internal reference",
+    "misp_alert":              "Internal reference"
 }
 
 # ─── Helper Functions ────────────────────────────────────────
