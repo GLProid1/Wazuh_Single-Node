@@ -27,7 +27,7 @@ services:
       - API_USERNAME=wazuh-wui
       - API_PASSWORD=MyS3cr37P450r.*-
     env_file:
-      - .env
+      - ./.env:/var/ossec/integrations/.env:ro
     volumes:
       - wazuh_api_configuration:/var/ossec/api/configuration
       - wazuh_etc:/var/ossec/etc
