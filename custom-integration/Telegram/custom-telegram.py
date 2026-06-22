@@ -5,7 +5,26 @@ import requests
 import html
 import os
 
-CHAT_ID = int(os.environ.get('ID_CHAT'))
+# --- Helper function to read file .env ---
+def load_env(env_path):
+    env_vars = {}
+    if os.path.exists(env_path):
+        with open(env_path, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    continue
+                if '=' in line:
+                    key, value = line.split('=', 1)
+                    env_vars[key.strip()] = value.strip()
+    return env_vars
+
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+ENV_DATA = load_env(os.path.join(CURRENT_DIR, '.env'))
+
+CHAT_ID = int(ENV_DATA.get('CHAT_ID'))
+TELEGRAM_API = ENV_DATA.get('TELEGRAM_API')
+hook_url = f"https://api.telegram.org/bot{TELEGRAM_API}/sendMessage"
 
 def create_message(alert_json):
     # Get alert information, use empty string if field didn't exist
@@ -28,7 +47,7 @@ def create_message(alert_json):
     except:
         src_ip = ''
 
-    # ✅ FIX: JANGAN escape description (sudah JSON, aman)
+    # FIX: JANGAN escape description (sudah JSON, aman)
     # Hanya escape field yang bisa jadi input user
     title = html.escape(str(title))
     # description = JANGAN DI-ESCAPE! Biarkan mentah
@@ -44,7 +63,7 @@ def create_message(alert_json):
     msg_content = f'<b>{title}</b>\n\n'
 
     if description:
-        msg_content += f'{description}\n\n'  # ✅ Langsung pakai, tanpa escape
+        msg_content += f'{description}\n\n'  #Langsung pakai, tanpa escape
 
     if groups:
         msg_content += f'<b>Groups:</b> {groups}\n'
@@ -73,7 +92,6 @@ def create_message(alert_json):
     return json.dumps(msg_data)
 
 alert_file = open(sys.argv[1])
-hook_url = sys.argv[3]
 
 # Read the alert file
 alert_json = json.loads(alert_file.read())

@@ -30,8 +30,28 @@ alert_file = open(sys.argv[1])
 alert = json.loads(alert_file.read())
 alert_file.close()
 alert_output = {}
-misp_base_url = "https://${MISP_IP}/attributes/restSearch/"
-misp_api_auth_key="${AUTH_KEY}"
+
+# --- Helper function to read .env ---
+def load_env(env_path):
+    env_vars = {}
+    if os.path.exists(env_path):
+        with open(env_path, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    continue
+                if '=' in line:
+                    key, value = line.split('=', 1)
+                    env_vars[key.strip()] = value.strip()
+    return env_vars
+
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+ENV_DATA = load_env(os.path.join(CURRENT_DIR, '.env'))
+
+# MISP configuration from .env
+misp_ip = ENV_DATA.get('MISP_IP')
+misp_api_auth_key = ENV_DATA.get('MISP_API_KEY')
+misp_base_url = "https://{misp_ip}/attributes/restSearch/"
 misp_apicall_headers = {"Content-Type":"application/json", "Authorization":f"{misp_api_auth_key}", "Accept":"application/json"}
 
 # --- End input gathering ---

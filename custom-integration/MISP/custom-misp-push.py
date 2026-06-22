@@ -8,21 +8,6 @@ Function: When Wazuh detects an attack, automatically push IOC
           or add attributes to an existing event.
 
 Trigger : Called via Wazuh custom integration
-
-Setup   :
-  1. Put the file in directory /var/ossec/integrations/
-  2. chmod +x custom-misp-push
-  3. chmod +x custom-misp-push.py
-  4. add integration config to ossec.conf (lihat bagian bawah)
-
-Configuration in ossec.conf:
-  <integration>
-    <name>custom-misp-push</name>
-    <hook_url>https://YOUR_MISP_IP</hook_url>
-    <api_key>YOUR_MISP_API_KEY</api_key>
-    <alert_format>json</alert_format>
-    <level>10</level>
-  </integration>
 =============================================================
 """
 
@@ -34,16 +19,29 @@ import ipaddress
 from datetime import datetime, timezone
 from requests.exceptions import ConnectionError, Timeout
 
-# ─── Konfigurasi ────────────────────────────────────────────
+# --- Helper function to read file .env ---
+def load_env(env_path):
+    env_vars = {}
+    if os.path.exists(env_path):
+        with open(env_path, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    continue
+                if '=' in line:
+                    key, value = line.split('=', 1)
+                    env_vars[key.strip()] = value.strip()
+    return env_vars
 
-# read from arguments (format Wazuh integration):
-#   argv[1] = path to alert JSON
-#   argv[2] = api_key from ossec.conf <api_key>
-#   argv[3] = hook_url from ossec.conf <hook_url>
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+ENV_DATA = load_env(os.path.join(CURRENT_DIR, '.env'))
 
 alert_file_path = sys.argv[1]
-MISP_API_KEY    = sys.argv[2]
-MISP_BASE_URL   = sys.argv[3].rstrip('/')
+
+MISP_API_KEY    = ENV_DATA.get('MISP_API_KEY')
+MISP_IP_ADDRESS = ENV_DATA.get('MISP_IP')
+MISP_BASE_URL   = f"https://{MISP_IP_ADDRESS}"
+
 ALLOW_PRIVATE_IP = True
 
 # Change with path CA cert MISP if MISP uses self-signed cert.
