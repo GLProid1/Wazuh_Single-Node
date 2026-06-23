@@ -1,0 +1,293 @@
+<!--
+  =============================================================
+  Honeypot Detection Rules
+  File	    : 100200-honeypot_rules.xml
+  Location  : /var/ossec/etc/rules/100200-honeypot_rules.xml
+  Version 1.0
+
+  Rule ID Range : 100200 - 100299
+  Breakdown	:
+    100200-100219  ->  Cowrie (SSH Honeypot)
+    100220-100239  ->  Dioneae(Multi-protocol Honeypot)
+    100240-100259  ->  Tanner (Web App Honeypot)
+  =============================================================
+-->
+
+<group name="honeypot,">
+
+  <!--
+  {"eventid":"cowrie.session.connect","src_ip":"172.22.0.1","src_port":37844,"dst_ip":"172.22.0.2","dst_port":22,
+  "session":"579de178b351","protocol":"ssh","message":"New connection: 172.22.0.1:37844 (172.22.0.2:22) [session: 579de178b351]",
+  "sensor":"ac33fd401d0d","uuid":"9fc9c531-6bae-11f1-8bbd-d6f247c51243","timestamp":"2026-06-19T07:23:33.618309Z"}
+  -->
+
+  <!-- COWRIE - SSH Honeypot (100200 - 100219) -->
+
+  <!-- Base rule: semua event dari Cowrie -->
+  <rule id="100200" level="3">
+    <decoded_as>json</decoded_as>
+    <field name="eventid">^cowrie\.</field>
+    <description>Cowrie Honeypot: Activity detected on SSH honeypot</description>
+    <group>honeypot,cowrie,</group>
+  </rule>
+
+  <!-- New SSH connection ke honeypot -->
+  <rule id="100201" level="6">
+    <if_sid>100200</if_sid>
+    <field name="eventid">cowrie.session.connect</field>
+    <description>Cowrie Honeypot: New SSH connection attempt from $(src_ip)</description>
+    <mitre>
+      <id>T1021.004</id>
+      <id>T1595.002</id>
+    </mitre>
+    <group>cowrie,connection,</group>
+  </rule>
+
+  <!-- Login Failed -->
+  <rule id="100202" level="8">
+    <if_sid>100200</if_sid>
+    <field name="eventid">cowrie.login.failed</field>
+    <description>Cowrie Honeypot: SSH login failed - user=$(username) from $(src_ip)</description>
+    <mitre>
+      <id>T1110.001</id>
+    </mitre>
+    <group>cowrie,authentication_failed,</group>
+  </rule>
+
+  <!-- Brute Force: repeated failed login from the same IP -->
+  <rule id="100203" level="12" frequency="5" timeframe="60">
+    <if_matched_sid>100202</if_matched_sid>
+    <same_field>src_ip</same_field>
+    <description>Cowrie Honeypot: SSH Brute Force detected - 5+ failed logins from $(src_ip)</description>
+    <mitre>
+      <id>T1110.001</id>
+    </mitre>
+    <group>cowrie,authentication_failed,brute_force,</group>
+  </rule>
+
+  <!-- Login Success to honeypot - high severity -->
+  <rule id="100204" level="14">
+    <if_sid>100200</if_sid>
+    <field name="eventid">cowrie.login.success</field>
+    <description>Cowrie Honeypot: SSH Login Succeeded - user=$(username) pass=$(password) from $(src_ip) - Attacked has shell access!</description>
+    <mitre>
+      <id>T1078</id>
+      <id>T1021.004</id>
+    </mitre>
+    <group>cowrie,authentication_success,</group>
+  </rule>
+
+  <!-- Command execution on honeypot -->
+  <rule id="100205" level="10">
+    <if_sid>100200</if_sid>
+    <field name="eventid">cowrie.command.input</field>
+    <description>Cowrie Honeypot: Command executed by attacked - CMD=$(input) from $(src_ip)</description>
+    <mitre>
+      <id>T1059</id>
+    </mitre>
+    <group>cowrie,command_execution,</group>
+  </rule>
+
+  <!-- Command that attempt to access sensitive files -->
+  <rule id="100206" level="12">
+    <if_sid>100205</if_sid>
+    <field name="input" type="pcre2">/etc/passwd|/etc/shadow|/root/|\.ssh/|id_rsa|authorized_keys</field>
+    <description>Cowrie Honeypot: Attacker accessed sensitive file path - CMD=$(input) from $(src_ip)</description>
+    <mitre>
+      <id>T1083</id>
+      <id>T1059</id>
+    </mitre>
+    <group>cowrie,command_execution,file_discovery,</group>
+  </rule>
+
+  <!-- Download /wget/curl by the attacker -->
+  <rule id="100207" level="13">
+    <if_sid>100205</if_sid>
+    <field name="input" type="pcre2">wget|curl|tftp|scp|nc |ncat|python.*http|bash.*http</field>
+    <description>Cowrie Honeypot: Attacker attempted file download/transfer - CMD=$(input) from $(src_ip)</description>
+    <mitre>
+      <id>T1059</id>
+      <id>T1071.001</id>
+    </mitre>
+    <group>cowrie,command_execution,download_attempt,</group>
+  </rule>
+
+  <!-- SSH session is closed -->
+  <rule id="100208" level="4">
+    <if_sid>100200</if_sid>
+    <field name="eventid">cowrie.session.closed</field>
+    <description>Cowrie Honeypot: SSH session closed from $(src_ip) (duration=$(duration)s)</description>
+    <group>cowrie,session_closed,</group>
+  </rule>
+
+  <!-- Client version fingerprint -->
+  <rule id="100209" level="5">
+    <if_sid>100200</if_sid>
+    <field name="eventid">cowrie.client.version</field>
+    <description>Cowrie Honeypot: SSH client fingerprint captured - version=$(version) from $(src_ip)</description>
+    <mitre>
+      <id>T1595</id>
+    </mitre>
+    <group>cowrie,fingerprint,</group>
+  </rule>
+
+  <!-- DIONAEA - Multi-protocol Honeypot (100220 - 100239) -->
+  
+  <!-- Base rule - all event from Dionaea -->
+  <rule id="100220" level="3">
+    <decoded_as>json</decoded_as>
+    <field name="connection.protocol">\.+</field>
+    <description>Dionaea Honeypot: Activity detected</description>
+    <group>dionaea,</group>
+  </rule>
+
+  <!-- HTTP connection to honeypot -->
+  <rule id="100221" level="6">
+    <if_sid>100220</if_sid>
+    <field name="connection.protocol">httpd</field>
+    <description>Dionaea Honeypot: HTTP probe detected from $(src_ip) on port $(dst_port)</description>
+    <mitre>
+      <id>T1595.002</id>
+      <id>T1071.001</id>
+    </mitre>
+    <group>honeypot,dionaea,http_probe,</group>
+  </rule>
+
+  <!-- MYSQL connection to honeypot -->
+  <rule id="100222" level="8">
+    <if_sid>100220</if_sid>
+    <field name="connection.protocol">mysqld</field>
+    <description>Dionaea Honeypot: MySQL detected from $(src_ip) on port 3306</description>
+    <mitre>
+      <id>T1595.002</id>
+      <id>T1190</id>
+    </mitre>
+    <group>dionaea,mysql_probe,</group>
+  </rule>
+
+  <!-- SMB connection to honeypot -->
+  <rule id="100223" level="8">
+    <if_sid>100220</if_sid>
+    <field name="connection.protocol">smbd</field>
+    <description>Dionaea Honeypot: SMB probe detected from $(src_ip) on port 445</description>
+    <mitre>
+      <id>T1595.002</id>
+      <id>T1021.002</id>
+    </mitre>
+    <group>dionaea,smb_probe,</group>
+  </rule>
+
+  <!-- FTP connection to honeypot -->
+  <rule id="100224" level="7">
+    <if_sid>100220</if_sid>
+    <field name="connection.protocol">ftpd</field>
+    <description>Dionaea Honeypot: FTP probe detected from $(src_ip)</description>
+    <mitre>
+      <id>T1595.002</id>
+    </mitre>
+    <group>dionaea,ftp_probe,</group>
+  </rule>
+
+  <!-- FTP credentials successfully captured -->
+  <rule id="100225" level="10">
+    <if_sid>100224</if_sid>
+    <field name="credentials.username">\.+</field>
+    <description>Dionaea Honeypot: FTP credentials captured - user=$(credentials.username) from $(src_ip)</description>
+    <mitre>
+      <id>T1110.001</id>
+      <id>T1078</id>
+    </mitre>
+    <group>dionaea,credential_capture,</group>
+  </rule>
+
+  <!-- Brute Force MYSQL - many repeated connections -->
+  <rule id="100226" level="11" frequency="4" timeframe="60">
+    <if_matched_sid>100222</if_matched_sid>
+    <same_field>src_ip</same_field>
+    <description>Dionaea Honeypot: MySQL brute force suspected - repeated probes from $(src_ip)</description>
+    <mitre>
+      <id>T1110.001</id>
+    </mitre>
+    <group>dionaea,brute_force,</group>
+  </rule>
+
+  <!-- Multi-protocol scan: SMB + MySQL from the same IP -->
+  <rule id="100227" level="12" frequency="2" timeframe="120">
+    <if_matched_sid>100222</if_matched_sid>
+    <if_matched_sid>100223</if_matched_sid>
+    <same_field>src_ip</same_field>
+    <description>Dionaea Honeypot: Multi-protocol scan detected - SMB + multiple service from $(src_ip)</description>
+    <mitre>
+      <id>T1595.002</id>
+    </mitre>
+    <group>dionaea,multi_protocol_scan,</group>
+  </rule>
+
+  <!-- TANNER - Web App Honeypot (100240 - 100259) -->
+
+  <!-- Base rule: all event from Tanner -->
+  <rule id="100240" level="3">
+    <decoded_as>json</decoded_as>
+    <field name="peer.ip">\.+</field>
+    <description>Tanner Honeypot: Web application activity detected</description>
+    <group>tanner,</group>
+  </rule>
+
+  <!-- XXS attack detected by tanner -->
+  <rule id="100241" level="10">
+    <if_sid>100240</if_sid>
+    <field name="response_msg.response.message.detection.name">xss</field>
+    <description>Tanner Honeypot: XSS attack detected from $(peer.ip)</description>
+    <mitre>
+      <id>T1190</id>
+      <id>T1059.007</id>
+    </mitre>
+    <group>tanner,xss,</group>
+  </rule>
+
+  <!-- SQL Injection attack -->
+  <rule id="100242" level="11">
+    <if_sid>100240</if_sid>
+    <field name="response_msg.response.message.detection.name">sqli</field>
+    <description>Tanner Honeypot: SQL Injection detected from $(peer.ip)</description>
+    <mitre>
+      <id>T1190</id>
+    </mitre>
+    <group>tanner,sqli,</group>
+  </rule>
+
+  <!-- LFI/Path traversal attack -->
+  <rule id="100243" level="11">
+    <if_sid>100240</if_sid>
+    <field name="response_msg.response.message.detection.name">lfi</field>
+    <description>Tanner Honeypot: Local File Inclusion detected from $(peer.ip)</description>
+    <mitre>
+      <id>T1190</id>
+      <id>T1083</id>
+    </mitre>
+    <group>tanner,lfi,</group>
+  </rule>
+
+  <!-- RFI attack -->
+  <rule id="100244" level="12">
+    <if_sid>100240</if_sid>
+    <field name="response_msg.response.message.detection.name">rfi</field>
+    <description>Tanner Honeypot: Remote File Inclusion detected from $(peer.ip)</description>
+    <mitre>
+      <id>T1190</id>
+    </mitre>
+    <group>tanner,rfi,</group>
+  </rule>
+
+  <!-- Path traversal manual via IP -->
+  <rule id="100245" level="10">
+    <if_sid>100240</if_sid>
+    <field name="path" type="pcre2">\.\./|/etc/passwd|/etc/shadow|/proc/|/var/log</field>
+    <description>Tanner Honeypot: Path traversal attempt from $(peer.ip)</description>
+    <mitre>
+      <id>T1083</id>
+      <id>T1190</id>
+    </mitre>
+    <group>tanner,path_traversal,</group>
+  </rule>
+</group>
