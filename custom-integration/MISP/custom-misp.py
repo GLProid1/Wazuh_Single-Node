@@ -51,7 +51,7 @@ ENV_DATA = load_env(os.path.join(CURRENT_DIR, '.env'))
 # MISP configuration from .env
 misp_ip = ENV_DATA.get('MISP_IP')
 misp_api_auth_key = ENV_DATA.get('MISP_API_KEY')
-misp_base_url = "https://{misp_ip}/attributes/restSearch/"
+misp_base_url = f"https://{misp_ip}/attributes/restSearch/"
 misp_apicall_headers = {"Content-Type":"application/json", "Authorization":f"{misp_api_auth_key}", "Accept":"application/json"}
 
 # --- End input gathering ---
