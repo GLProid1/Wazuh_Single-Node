@@ -47,10 +47,8 @@ def create_message(alert_json):
     except:
         src_ip = ''
 
-    # FIX: JANGAN escape description (sudah JSON, aman)
-    # Hanya escape field yang bisa jadi input user
     title = html.escape(str(title))
-    # description = JANGAN DI-ESCAPE! Biarkan mentah
+    description = html.escape(str(description))
     groups = html.escape(str(groups))
     src_ip = html.escape(str(src_ip))
     rule_id = html.escape(str(rule_id))
@@ -59,7 +57,6 @@ def create_message(alert_json):
     agent_id = html.escape(str(agent_id))
     agent_ip = html.escape(str(agent_ip))
 
-    # Format message - description TIDAK di-escape
     msg_content = f'<b>{title}</b>\n\n'
 
     if description:
