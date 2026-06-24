@@ -1,22 +1,41 @@
-<!-- ID: 100300 - 100399 -->
+<!--
+  =============================================================
+  Honeypot Detection Rules
+  File      : 100300-nginx_modsec_rules.xml
+  Location  : /var/ossec/etc/rules/100300-nginx_modsec_rules.xml
+  Version 1.0
+
+  Rule ID Range : 100300 - 100399
+  =============================================================
+-->
 
 <group name="nginx,modsecurity,web,">
   
-  <rule id="100300" level="3">
+  <rule id="100300" level="0">
     <decoded_as>json</decoded_as>
     <field name="transaction.messages" type="pcre2">ruleId</field>
     <description>ModSecurity: Web Request Diproses</description>
     <group>modsecurity,</group>
   </rule>
 
-  <rule id="100301" level="7">
+  <rule id="100301" level="0">
+    <if_sid>100300</if_sid>
+    <field name="transaction.messages" type="pcre2">attack-reputation-scanner|913100</field>
+    <description>ModSecurity: Single Scanner Hit from $(transaction.client_ip)</description>
+    <group>scanner_base,</group>
+  </rule>
+
+  <!-- Activate when you user domain instead of IP -->
+  <!--
+  <rule id="100302" level="7">
     <if_sid>100300</if_sid>
     <field name="transaction.messages" type="pcre2">920350</field>
     <description>ModSecurity: Host Header Using Numeric IP from $(transaction.client_ip)</description>
     <group>recon,attack,</group>
   </rule>
+  -->
 
-  <rule id="100302" level="10">
+  <rule id="100303" level="10">
     <if_sid>100300</if_sid>
     <field name="transaction.messages" type="pcre2">attack-sqli</field>
     <description>ModSecurity: SQL Injection Detected from $(transaction.client_ip)</description>
@@ -24,7 +43,7 @@
     <group>sqli,attack,</group>
   </rule>
 
-  <rule id="100303" level="10">
+  <rule id="100304" level="10">
     <if_sid>100300</if_sid>
     <field name="transaction.messages" type="pcre2">attack-xss</field>
     <description>ModSecurity: XSS Attack Detected from $(transaction.client_ip)</description>
@@ -32,7 +51,7 @@
     <group>xss,attack,</group>
   </rule>
 
-  <rule id="100304" level="10">
+  <rule id="100305" level="10">
     <if_sid>100300</if_sid>
     <field name="transaction.messages" type="pcre2">attack-lfi</field>
     <description>ModSecurity: Path Traversal / LFI Attempt from $(transaction.client_ip)</description>
@@ -40,7 +59,7 @@
     <group>lfi,attack,</group>
   </rule>
 
-  <rule id="100305" level="12">
+  <rule id="100306" level="12">
     <if_sid>100300</if_sid>
     <field name="transaction.messages" type="pcre2">attack-rce</field>
     <description>ModSecurity: Remote Command Execution (RCE) Attempt from $(transaction.client_ip)</description>
@@ -48,15 +67,15 @@
     <group>rce,attack,</group>
   </rule>
 
-  <rule id="100306" level="8">
-    <if_sid>100300</if_sid>
-    <field name="transaction.messages" type="pcre2">attack-reputation-scanner</field>
-    <description>ModSecurity: Automated Security Scanner Detected from $(transaction.client_ip)</description>
+  <rule id="100307" level="8" frequency="5" timeframe="8">
+    <if_matched_sid>100301</if_matched_sid>
+    <same_field>transaction.client_ip</same_field>
+    <description>ModSecurity: Sustained Automated Security Scanner Detected from $(transaction.client_ip)</description>
     <mitre><id>T1595</id></mitre>
     <group>scanner,recon,attack,</group>
   </rule>
 
-  <rule id="100307" level="5">
+  <rule id="100308" level="5">
     <if_sid>100300</if_sid>
     <field name="transaction.messages" type="pcre2">920\d{3}</field>
     <field name="transaction.messages" type="pcre2" negate="yes">920350</field>
@@ -64,7 +83,7 @@
     <group>protocol_violation,</group>  
   </rule>
   
-  <rule id="100308" level="10">
+  <rule id="100309" level="10">
     <if_sid>100300</if_sid>
     <field name="transaction.messages" type="pcre2">attack-rfi</field>
     <description>ModSecurity: Remote File Inclusion (RFI) Attack Detected from $(transaction.client_ip)</description>
@@ -72,7 +91,7 @@
     <group>attack,rfi</group>
   </rule>
 
-  <rule id="100309" level="10">
+  <rule id="100310" level="10">
     <if_sid>100300</if_sid>
     <field name="transaction.messages" type="pcre2">attack-multipart-header|MULTIPART-ATTACK</field>
     <description>ModSecurity: Multipart/Evasion Attack Detected from $(transaction.client_ip)</description>
@@ -82,14 +101,6 @@
     <group>attack,evasion,multipart</group>
   </rule>
   
-  <rule id="100320" level="10">
-    <if_sid>100300</if_sid>
-    <field name="transaction.messages" type="pcre2">"severity":"2"</field>
-    <field name="transaction.messages" type="pcre2" negate="yes">attack-(sqli|xss|lfi|rce|rfi|multipart-header)</field>
-    <description>ModSecurity: Severity Attack Critical from $(transaction.client_ip)</description>
-    <group>attack,critical,</group>
-  </rule>
-
   <rule id="100321" level="12">
     <if_sid>100300</if_sid>
     <field name="transaction.messages" type="pcre2">(?=.*920350)(?=.*attack-(sqli|xss|lfi|rce|rfi))</field>
@@ -104,5 +115,12 @@
     <description>ModSecurity: High Frequency Attack Campaign from $(transaction.client_ip)</description>
     <mitre><id>T1190</id></mitre>
     <group>attack_campaign,high_severity,</group>
+  </rule>
+
+  <rule id="100323" level="8">
+    <if_sid>100300</if_sid>
+    <field name="transaction.messages" type="pcre2">"severity":"2"</field>
+    <description>ModSecurity: Critical Severity Event from $(transaction.client_ip)</description>
+    <group>attack,critical,</group>
   </rule>
 </group>
