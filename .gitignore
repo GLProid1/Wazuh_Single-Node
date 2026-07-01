@@ -3,3 +3,4 @@ config/wazuh_indexer_ssl_certs/*.key
 *env
 *.env
 *env*
+!.env.example
