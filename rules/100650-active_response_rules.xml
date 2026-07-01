@@ -1,0 +1,19 @@
+<group name="local,active_response,">
+
+  <rule id="100650" level="8">
+    <if_sid>650</if_sid>
+    <field name="parameters.program">firewall-drop-modsec</field>
+    <field name="command">add</field>
+    <description>Firewall-Drop-Modsec: Host Blocked by Active-Response IP $(parameters.alert.data.transaction.client_ip)</description>
+    <group>docker_firewall,</group>
+  </rule>
+
+  <rule id="100651" level="7">
+    <if_sid>650</if_sid>
+    <field name="parameters.program">firewall-drop-modsec</field>
+    <field name="command">delete</field>
+    <description>Firewall-Drop-Modsec: Host Unblocked by Active Response IP $(parameters.alert.data.transaction.srcip)</description>
+    <group>docker_firewall,</group>
+  </rule>
+
+</group>
