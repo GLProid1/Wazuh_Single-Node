@@ -1,0 +1,116 @@
+<!-- 	Suricata rules 	 -->
+<!-- ID: 100500 - 100599 -->
+
+<group name="ids,suricata,">
+
+    <!--
+    {"timestamp":"2016-05-02T17:46:48.515262+0000","flow_id":1234,"in_iface":"eth0","event_type":"alert","src_ip":"16.10.10.10","src_port":5555,"dest_ip":"16.10.10.11","dest_port":80,"proto":"TCP","alert":{"action":"allowed","gid":1,"signature_id":2019236,"rev":3,"signature":"ET WEB_SERVER Possible CVE-2014-6271 Attempt in HTTP Version Number","category":"Attempted Administrator Privilege Gain","severity":1},"payload":"abcde","payload_printable":"hi test","stream":0,"host":"suricata.com"}
+    -->
+    <rule id="100500" level="0">
+        <decoded_as>json</decoded_as>
+        <field name="timestamp">\.+</field>
+        <field name="event_type">\.+</field>
+        <description>Suricata messages.</description>
+        <options>no_full_log</options>
+    </rule>  
+
+    <!-- Nmap via Signature Name -->
+    <rule id="100501" level="10">
+      <if_sid>100500</if_sid>
+      <field name="alert.signature" type="pcre2">(?i)nmap</field>
+      <description>Suricata: Nmap Scan Detected from $(src_ip) - $(alert.signature)</description>
+      <mitre><id>T1595.001</id></mitre>
+      <group>reconnaissance,nmap</group>
+      <options>no_full_log</options>
+    </rule>
+
+    <!-- Nmap via HTTP User-Agent -->
+    <rule id="100502" level="10">
+      <if_sid>100500</if_sid>
+      <field name="http.http_user_agent" type="pcre2">(?i)nmap</field>
+      <description>Suricata: Nmap HTTP User-Agent Detected from $(src_ip)</description>
+      <mitre><id>T1595.001</id></mitre>
+      <group>reconnaissance,nmap</group>
+      <options>no_full_log</options>
+    </rule>
+
+    <!-- Repeated Nmap from Same IP -->
+    <rule id="100503" level="12" frequency="5" timeframe="60">
+      <if_matched_sid>100501</if_matched_sid>
+      <same_source_ip />
+      <description>Suricata: Repeated Nmap Scan from $(src_ip) - Active Reconnaissance</description>
+      <mitre><id>T1595.001</id></mitre>
+      <group>reconnaissance,nmap,attack_campaign</group>
+      <options>no_full_log</options>
+    </rule>
+
+    <!-- Severity 1 - High -->
+    <rule id="100504" level="10">
+      <if_sid>100500</if_sid>
+      <field name="alert.severity">^1$</field>
+      <field name="alert.signature" type="pcre2" negate="yes">(?i)nmap</field>
+      <description>Suricata: High Severity Alert - $(alert.signature) from $(src_ip)</description>
+      <group>high_severity</group>
+      <options>no_full_log</options>
+    </rule>
+
+    <!-- High Severity Allowed (not blocked) Non-Nmap - Critical -->
+    <rule id="100505" level="12">
+      <if_sid>100500</if_sid>
+      <field name="alert.action">^allowed$</field>
+      <field name="alert.severity">^1$</field>
+      <field name="alert.signature" type="pcre2" negate="yes">(?i)nmap</field>
+      <description>Suricata: HIGH Severity Attack Allowed (not blocked) from $(src_ip) - $(alert.signature)</description>
+      <mitre><id>T1190</id></mitre>
+      <group>high_severity,not_blocked</group>
+      <options>no_full_log</options>
+    </rule>
+
+    <!-- Repeated High Severity from Same IP Non-Nmap -->
+    <rule id="100506" level="12" frequency="10" timeframe="60">
+      <if_matched_sid>86692</if_matched_sid>
+      <same_source_ip />
+      <description>Suricata: Multiple High Severity Alerts from $(src_ip) - Possible Attack Campaign</description>
+      <mitre><id>T1190</id></mitre>
+      <group>high_severity,attack_campaign</group>
+      <options>no_full_log</options>
+    </rule>
+
+    <!-- Severity 2 - Medium -->
+    <rule id="100507" level="7">
+      <if_sid>100500</if_sid>
+      <field name="alert.severity">^2$</field>
+      <description>Suricata: Medium Severity Alert - $(alert.signature) from $(src_ip)</description>
+      <group>medium_severity</group>
+    </rule>
+
+    <!-- Severity 3 - Low -->
+    <rule id="100508" level="5">
+      <if_sid>100500</if_sid>
+      <field name="alert.severity">^3$</field>
+      <description>Suricata: Low Severity Alert - $(alert.signature) from $(src_ip)</description>
+      <group>low_severity</group>
+      <options>no_full_log</options>
+    </rule> 
+
+    <rule id="100509" level="0">
+      <if_sid>100500</if_sid>
+      <field name="event_type">^http$</field>
+      <description>Suricata: HTTP.</description>
+      <options>no_full_log</options>
+    </rule>
+
+    <rule id="100510" level="0">
+      <if_sid>100500</if_sid>
+      <field name="event_type">^dns$</field>
+      <description>Suricata: DNS.</description>
+      <options>no_full_log</options>
+    </rule>
+
+    <rule id="100511" level="0">
+      <if_sid>100500</if_sid>
+      <field name="event_type">^tls$</field>
+      <description>Suricata: TLS.</description>
+      <options>no_full_log</options>
+    </rule>
+</group>
